@@ -1,21 +1,16 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-Service code lives under `src/ai_proxy/`; keep FastAPI routers in `src/ai_proxy/routes/`, outbound adapters in `src/ai_proxy/integrations/`, and shared logic (auth, rate limiting, logging) in `src/ai_proxy/core/`. Persist prompt templates or static fixtures in `src/ai_proxy/assets/`. Tests mirror the package layout inside `tests/` (for example `tests/routes/test_responses.py`). Deployment collateral such as Railway manifests, Docker assets, or Fly.io configs belong in `deploy/`. Place sample configuration in `.env.example` and document required environment variables inline.
+## Project Layout
+Application code resides in `src/ai_proxy/`. Group HTTP interfaces in `routes/`, adapters to external services in `integrations/`, and shared auth, rate-limit, or logging helpers in `core/`. Persist prompt templates or static payloads under `assets/`. Tests mirror this layout in `tests/` (for example, `tests/routes/test_responses.py`). Deployment artifacts such as Railway manifests, Dockerfiles, or Fly scripts belong in `deploy/`. Track required environment variables in `.env.example` with short inline notes.
 
-## Build, Test, and Development Commands
-Use [uv](https://docs.astral.sh/uv/) for environment management. Bootstrap dependencies with `uv sync` (reads `pyproject.toml` and creates an isolated `.venv/`). Run ad-hoc commands through `uv run` so the managed environment is always active:
-- `uv run uvicorn src.ai_proxy.main:app --reload` – start the API with live reload
-- `uv run ruff check src --fix` then `uv run ruff format` – lint and format
-- `uv run pytest -q` – execute the test suite
-- `uv lock --upgrade` – refresh dependency pins when updating libraries
-Commit the generated `.venv/` hash files (`uv.lock`) but keep the actual virtual environment out of version control.
+## Setup & Everyday Commands
+Use [uv](https://docs.astral.sh/uv/) to manage the toolchain. `uv sync` creates `.venv/` and installs dependencies from `pyproject.toml`/`uv.lock`. Run commands through the managed environment: `uv run uvicorn src.ai_proxy.main:app --reload` for local dev, `uv run ruff check src --fix` followed by `uv run ruff format` for lint+format, and `uv run pytest -q` for fast verification. Refresh pinned versions with `uv lock --upgrade` and commit the updated lockfile when dependency changes ship.
 
-## Coding Style & Naming Conventions
-Stick to PEP 8 with 4-space indentation, type hints on public surfaces, and expressive `snake_case` identifiers. Module names should be narrow and purpose-driven (`rate_limit.py`, `auth_backend.py`). Prefer dataclasses or Pydantic models for request/response contracts and keep schema definitions adjacent to the route that serves them. Docstrings follow Google style, focusing on parameters and return types. Run `uv run ruff format` before opening a PR to ensure consistent styling.
+## Style & Naming
+Follow PEP 8 with 4-space indentation, comprehensive type hints on public functions, and descriptive snake_case identifiers. Keep modules single-purpose (`rate_limit.py`, `auth_backend.py`). Prefer Pydantic models or dataclasses to document request/response schemas near the route that uses them. Docstrings should follow Google style and explain inputs, side effects, and return values succinctly. Run `uv run ruff format` before submitting changes.
 
-## Testing Guidelines
-Write pytest modules named `test_<area>.py`; colocate fixtures in `tests/conftest.py` and mock outbound OpenAI traffic so suites stay deterministic. For features that touch authentication, throttling, or quota tracking, add regression tests and aim for >85% coverage using `uv run pytest --cov=src/ai_proxy --cov-report=term-missing`. Store slower integration or contract tests in `tests/integration/` and tag them with `@pytest.mark.integration` to allow CI selectors.
+## Testing Expectations
+Author pytest suites alongside features, naming files `test_<area>.py`. Store reusable fixtures in `tests/conftest.py` and mock outbound OpenAI calls to keep tests deterministic. For authentication, throttling, or billing paths, extend coverage and target >85% overall using `uv run pytest --cov=src/ai_proxy --cov-report=term-missing`. Place slower or contract tests in `tests/integration/` and tag them with `@pytest.mark.integration` so CI can gate them.
 
-## Commit & Pull Request Guidelines
-Adopt Conventional Commit prefixes (`feat`, `fix`, `chore`, `docs`) and imperative summaries (`feat: add responses proxy route`). Reference related issues or tickets in the body, explicitly note environment or schema changes, and include curl samples when behavior shifts. Pull requests should describe intent, risk, and validation (`uv run pytest`) and link to docs or diagrams when architecture evolves. Request peer review prior to merging, even for operations-focused updates.
+## Git & PR Workflow
+Create a feature branch before implementing changes: `git checkout -b feature/<summary>` from up-to-date `main`. Commit in small, logical steps using Conventional Commit prefixes (`feat`, `fix`, `docs`, `chore`) and imperative messages. Push branches to origin (`git push -u origin feature/<summary>`) and open a pull request that outlines intent, risk, validation (`uv run pytest`), and any configuration updates. Reference tickets or design docs, include curl examples when APIs change, and request peer review prior to merge.
