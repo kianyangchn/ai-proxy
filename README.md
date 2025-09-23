@@ -15,4 +15,15 @@ This is a Python-based AI proxy. It is deployed on Railway as a gatekeeper for c
 5. Launch the API locally: `uv run uvicorn src.ai_proxy.main:app --reload`.
 6. Run tests and lint checks with `uv run pytest` and `uv run ruff check`.
 
-The proxy listens on `http://127.0.0.1:8000/v1/responses` and accepts OpenAI-compatible request bodies. Callers must send an `Authorization: Bearer <jwt>` header signed by your backend and can optionally include `X-OpenAI-API-Key` to forward their own key; otherwise the proxy reads `OPENAI_API_KEY` from the process environment (e.g., macOS shell or Railway variables).
+The proxy listens on `http://127.0.0.1:8000/v1/menu`. Callers must send an `Authorization: Bearer <jwt>` header signed by your backend and can optionally include `X-OpenAI-API-Key` to forward their own key; otherwise the proxy reads `OPENAI_API_KEY` from the process environment (e.g., macOS shell or Railway variables). The request body should provide the menu OCR snippets to analyse:
+
+```json
+{
+  "texts": [
+    "辣子鸡丁 - 48元",
+    "招牌红烧肉，入口即化"
+  ]
+}
+```
+
+The service appends backend-owned instructions, submits the payload to OpenAI's Responses API via the official SDK, and returns a JSON array of structured menu items to the caller.

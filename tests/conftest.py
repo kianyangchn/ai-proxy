@@ -11,6 +11,7 @@ def _configure_settings(monkeypatch):
     monkeypatch.setenv("AUTH_JWT_ISSUER", "issuer")
     monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
     monkeypatch.setenv("RATE_LIMIT_RPM", "100")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-test-model")
     clear_settings_cache()
     reset_rate_limiter()
     yield

@@ -1,16 +1,16 @@
-"""OpenAI HTTP client helpers."""
+"""OpenAI client helpers built on the official SDK."""
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Dict, Optional
 
-import httpx
 from fastapi import HTTPException, status
+from openai import APIStatusError, AsyncOpenAI, OpenAIError
 
 logger = logging.getLogger("ai_proxy.openai")
 
-_API_BASE_URL = "https://api.openai.com/v1"
 _ALLOWED_FORWARD_HEADERS = {"OpenAI-Beta", "OpenAI-Organization"}
 
 
@@ -28,23 +28,35 @@ async def forward_response_request(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="OpenAI key missing"
         )
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
+    allowed_headers = (
+        {k: v for k, v in extra_headers.items() if k in _ALLOWED_FORWARD_HEADERS}
+        if extra_headers
+        else None
+    )
 
-    if extra_headers:
-        headers.update({k: v for k, v in extra_headers.items() if k in _ALLOWED_FORWARD_HEADERS})
+    client = AsyncOpenAI(api_key=api_key)
 
-    async with httpx.AsyncClient(timeout=timeout_seconds) as client:
-        response = await client.post(f"{_API_BASE_URL}/responses", json=payload, headers=headers)
+    try:
+        response = await client.responses.create(
+            **payload,
+            extra_headers=allowed_headers,
+            timeout=timeout_seconds,
+        )
+    except APIStatusError as exc:
+        logger.warning("OpenAI API error %s", exc.message)
+        detail: Any = exc.message
+        if exc.response is not None:
+            try:
+                body_bytes = await exc.response.aread()
+                detail = json.loads(body_bytes.decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                detail = {"error": exc.message}
+        raise HTTPException(status_code=exc.status_code, detail=detail) from exc
+    except OpenAIError as exc:  # pragma: no cover - rare SDK errors
+        logger.exception("Unexpected OpenAI client error")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Unexpected OpenAI client error",
+        ) from exc
 
-    if response.status_code >= 400:
-        logger.warning("OpenAI error %s", response.text)
-        try:
-            detail = response.json()
-        except ValueError:
-            detail = {"error": response.text}
-        raise HTTPException(status_code=response.status_code, detail=detail)
-
-    return response.json()
+    return response.model_dump()

@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .core.config import get_settings
-from .routes import health, responses
+from .routes import health, menu
 
 logger = logging.getLogger("ai_proxy")
 
@@ -29,7 +29,7 @@ def create_application() -> FastAPI:
     )
 
     app.include_router(health.router)
-    app.include_router(responses.router)
+    app.include_router(menu.router)
 
     return app
 
