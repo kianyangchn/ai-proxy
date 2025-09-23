@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     auth_jwt_issuer: Optional[str] = None
     auth_jwt_algorithm: str = "HS256"
     rate_limit_rpm: int = 60
+    openai_model: str = "gpt-4.1-mini"
     request_timeout_seconds: float = 120.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
