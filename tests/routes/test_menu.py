@@ -50,7 +50,7 @@ async def test_menu_forwards_payload():
                 "/v1/menu",
                 headers=headers,
                 json={
-                    "texts": ["Intro text", "Another insight"],
+                    "text": "Intro text\nAnother insight",
                     "lang_in": "zh-Hans",
                     "lang_out": "en",
                 },
@@ -66,8 +66,8 @@ async def test_menu_forwards_payload():
     user_prompt = called_payload["input"]
     assert "Input language: zh-Hans" in user_prompt
     assert "Output language: en" in user_prompt
-    assert "Menu text 1" in user_prompt and "Intro text" in user_prompt
-    assert "Menu text 2" in user_prompt and "Another insight" in user_prompt
+    assert "Menu text:" in user_prompt
+    assert "Intro text" in user_prompt and "Another insight" in user_prompt
     assert called_payload["reasoning"] == {"effort": "minimal"}
     text_config = called_payload["text"]
     format_cfg = text_config["format"]
@@ -87,7 +87,7 @@ async def test_menu_rejects_empty_texts():
         response = await client.post(
             "/v1/menu",
             headers=headers,
-            json={"texts": [""], "lang_out": "en"},
+            json={"text": "   ", "lang_out": "en"},
         )
 
     assert response.status_code == 422
@@ -101,7 +101,7 @@ async def test_menu_requires_output_language():
         response = await client.post(
             "/v1/menu",
             headers=headers,
-            json={"texts": ["Menu item"], "lang_out": "   "},
+            json={"text": "Menu item", "lang_out": "   "},
         )
 
     assert response.status_code == 422

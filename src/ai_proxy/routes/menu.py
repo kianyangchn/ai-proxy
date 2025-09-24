@@ -25,9 +25,9 @@ router = APIRouter(prefix="/v1", tags=["menu"])
 
 
 class MenuExtractionPayload(BaseModel):
-    """Validated payload containing OCR-derived menu text snippets."""
+    """Validated payload containing OCR-derived menu text."""
 
-    texts: list[str] = Field(..., description="Text snippets that require analysis.")
+    text: str = Field(..., description="Raw OCR menu text to analyse.")
     lang_in: str | None = Field(
         default=None,
         description="Language code (BCP-47) for the source menu text; can be omitted to auto-detect.",
@@ -36,12 +36,12 @@ class MenuExtractionPayload(BaseModel):
         ..., description="Language code (BCP-47) for the structured output, e.g. 'en' or 'en-US'."
     )
 
-    @field_validator("texts", mode="after")
+    @field_validator("text", mode="after")
     @classmethod
-    def _validate_texts(cls, texts: list[str]) -> list[str]:
-        cleaned = [text.strip() for text in texts if text and text.strip()]
+    def _validate_text(cls, value: str) -> str:
+        cleaned = value.strip()
         if not cleaned:
-            raise ValueError("texts must include at least one non-empty entry")
+            raise ValueError("text must include non-empty content")
         return cleaned
 
     @field_validator("lang_in", mode="after")
@@ -83,7 +83,7 @@ async def generate_menu(
         if key in {"OpenAI-Beta", "OpenAI-Organization"}
     }
 
-    user_prompt = build_user_prompt(menu_payload.texts, menu_payload.lang_in, menu_payload.lang_out)
+    user_prompt = build_user_prompt(menu_payload.text, menu_payload.lang_in, menu_payload.lang_out)
 
     text_config: Dict[str, Any] = {"format": build_text_format_config()}
     if settings.openai_text_verbosity:

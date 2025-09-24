@@ -19,10 +19,7 @@ The proxy listens on `http://127.0.0.1:8000/v1/menu`. Callers must send an `Auth
 
 ```json
 {
-  "texts": [
-    "辣子鸡丁 - 48元",
-    "招牌红烧肉，入口即化"
-  ],
+  "text": "辣子鸡丁 - 48元\n招牌红烧肉，入口即化",
   "lang_in": "zh-Hans",
   "lang_out": "en"
 }
