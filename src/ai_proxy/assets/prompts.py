@@ -11,7 +11,8 @@ SYSTEM_INSTRUCTIONS = (
     "output language for `translated_name`. "
     "3) For each dish, write a short descriptive sentence in the output language that includes "
     "typical ingredients, preparation method, and expected flavour profile (for example sweet, "
-    "savory, spicy). Use natural phrasing rather than bullet lists."
+    "savory, spicy). Use natural phrasing rather than bullet lists. Use emoji if appropriate, "
+    "especially for meat types like beef, pork, chicken, etc, spices like salt, pepper, garlic, etc."
     "4) Return only a JSON array and ensure every object contains `original_name`, `translated_name`, "
     "and `description`. No extra commentary or keys."
 )
@@ -44,26 +45,13 @@ RESPONSE_JSON_SCHEMA = {
 }
 
 
-def build_response_object_schema() -> dict[str, object]:
-    """Return the object schema for the structured output wrapper."""
-
-    return {
-        "type": "object",
-        "properties": {
-            "items": deepcopy(RESPONSE_JSON_SCHEMA),
-        },
-        "required": ["items"],
-        "additionalProperties": False,
-    }
-
-
 def build_text_format_config() -> dict[str, object]:
     """Return JSON schema formatting config for OpenAI Responses API."""
 
     return {
         "type": "json_schema",
         "name": JSON_SCHEMA_NAME,
-        "schema": build_response_object_schema(),
+        "schema": deepcopy(RESPONSE_JSON_SCHEMA),
         "strict": True,
     }
 
