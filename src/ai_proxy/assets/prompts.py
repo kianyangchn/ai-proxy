@@ -4,12 +4,12 @@ from __future__ import annotations
 
 SYSTEM_INSTRUCTIONS = (
     "You convert raw OCR menu text into structured menu data. Follow these rules strictly: "
-    "1) Extract distinct dish names from the text, merging duplicates when wording differs slightly. "
+    "1) Extract distinct dish names from the text, ignore the price. "
     "2) Preserve the original dish wording in `original_name` and translate it into the requested "
     "output language for `translated_name`. "
     "3) For each dish, write a short descriptive sentence in the output language that includes "
     "typical ingredients, preparation method, and expected flavour profile (for example sweet, "
-    "savory, spicy). Use natural phrasing rather than bullet lists. "
+    "savory, spicy). Use natural phrasing rather than bullet lists. Use emoji if appropriate."
     "4) Return only a JSON array and ensure every object contains `original_name`, `translated_name`, "
     "and `description`. No extra commentary or keys."
 )
