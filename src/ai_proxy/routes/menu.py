@@ -10,8 +10,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
 from ..assets.prompts import (
-    RESPONSE_JSON_SCHEMA,
     SYSTEM_INSTRUCTIONS,
+    build_text_format_config,
     build_user_prompt,
 )
 from ..core.auth import AuthContext, authenticate_request
@@ -85,17 +85,19 @@ async def generate_menu(
 
     user_prompt = build_user_prompt(menu_payload.texts, menu_payload.lang_in, menu_payload.lang_out)
 
+    text_config: Dict[str, Any] = {"format": build_text_format_config()}
+    if settings.openai_text_verbosity:
+        text_config["verbosity"] = settings.openai_text_verbosity
+
     payload: Dict[str, Any] = {
         "model": settings.openai_model,
         "instructions": SYSTEM_INSTRUCTIONS,
         "input": user_prompt,
-        "response_format": RESPONSE_JSON_SCHEMA,
+        "text": text_config,
     }
 
     if settings.openai_reasoning_effort:
         payload["reasoning"] = {"effort": settings.openai_reasoning_effort}
-    if settings.openai_text_verbosity:
-        payload["text"] = {"verbosity": settings.openai_text_verbosity}
 
     upstream_response = await forward_response_request(
         payload=payload,

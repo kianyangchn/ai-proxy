@@ -5,7 +5,11 @@ import jwt
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from ai_proxy.assets.prompts import SYSTEM_INSTRUCTIONS
+from ai_proxy.assets.prompts import (
+    JSON_SCHEMA_NAME,
+    SYSTEM_INSTRUCTIONS,
+    build_response_object_schema,
+)
 from ai_proxy.main import app
 
 SECRET = "test-secret"
@@ -64,11 +68,14 @@ async def test_menu_forwards_payload():
     assert "Output language: en" in user_prompt
     assert "Menu text 1" in user_prompt and "Intro text" in user_prompt
     assert "Menu text 2" in user_prompt and "Another insight" in user_prompt
-    assert called_payload["response_format"]["type"] == "json_schema"
-    schema_props = called_payload["response_format"]["json_schema"]["schema"]["items"]["properties"]
-    assert set(schema_props.keys()) == {"original_name", "translated_name", "description"}
     assert called_payload["reasoning"] == {"effort": "minimal"}
-    assert called_payload["text"] == {"verbosity": "low"}
+    text_config = called_payload["text"]
+    format_cfg = text_config["format"]
+    assert format_cfg["type"] == "json_schema"
+    assert format_cfg["name"] == JSON_SCHEMA_NAME
+    assert format_cfg["schema"] == build_response_object_schema()
+    assert format_cfg["strict"] is True
+    assert text_config["verbosity"] == "low"
     assert kwargs["api_key"] == "test-openai-key"
 
 
