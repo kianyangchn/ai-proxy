@@ -28,6 +28,13 @@ class MenuExtractionPayload(BaseModel):
     """Validated payload containing OCR-derived menu text snippets."""
 
     texts: list[str] = Field(..., description="Text snippets that require analysis.")
+    lang_in: str | None = Field(
+        default=None,
+        description="Language code (BCP-47) for the source menu text; can be omitted to auto-detect.",
+    )
+    lang_out: str = Field(
+        ..., description="Language code (BCP-47) for the structured output, e.g. 'en' or 'en-US'."
+    )
 
     @field_validator("texts", mode="after")
     @classmethod
@@ -35,6 +42,22 @@ class MenuExtractionPayload(BaseModel):
         cleaned = [text.strip() for text in texts if text and text.strip()]
         if not cleaned:
             raise ValueError("texts must include at least one non-empty entry")
+        return cleaned
+
+    @field_validator("lang_in", mode="after")
+    @classmethod
+    def _normalize_lang_in(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned or None
+
+    @field_validator("lang_out", mode="after")
+    @classmethod
+    def _validate_lang_out(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("lang_out must be provided")
         return cleaned
 
 
@@ -60,20 +83,19 @@ async def generate_menu(
         if key in {"OpenAI-Beta", "OpenAI-Organization"}
     }
 
+    user_prompt = build_user_prompt(menu_payload.texts, menu_payload.lang_in, menu_payload.lang_out)
+
     payload: Dict[str, Any] = {
         "model": settings.openai_model,
-        "input": [
-            {
-                "role": "system",
-                "content": [{"type": "text", "text": SYSTEM_INSTRUCTIONS}],
-            },
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": build_user_prompt(menu_payload.texts)}],
-            },
-        ],
+        "instructions": SYSTEM_INSTRUCTIONS,
+        "input": user_prompt,
         "response_format": RESPONSE_JSON_SCHEMA,
     }
+
+    if settings.openai_reasoning_effort:
+        payload["reasoning"] = {"effort": settings.openai_reasoning_effort}
+    if settings.openai_text_verbosity:
+        payload["text"] = {"verbosity": settings.openai_text_verbosity}
 
     upstream_response = await forward_response_request(
         payload=payload,

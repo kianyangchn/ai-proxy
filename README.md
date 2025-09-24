@@ -22,8 +22,14 @@ The proxy listens on `http://127.0.0.1:8000/v1/menu`. Callers must send an `Auth
   "texts": [
     "辣子鸡丁 - 48元",
     "招牌红烧肉，入口即化"
-  ]
+  ],
+  "lang_in": "zh-Hans",
+  "lang_out": "en"
 }
 ```
 
-The service appends backend-owned instructions, submits the payload to OpenAI's Responses API via the official SDK, and returns a JSON array of structured menu items to the caller.
+The service appends backend-owned instructions, submits the payload to OpenAI's Responses API via the official SDK, and returns a JSON array of structured menu items with `original_name`, `translated_name`, and `description` fields.
+
+Use BCP-47 language tags for `lang_in` and `lang_out` (for example `zh-Hans`, `en`, or `en-US`). On iOS you can derive these values from `Locale.current.identifier` or `Locale.Language.languageCode?.identifier` to keep the client and backend aligned.
+
+You can tune the OpenAI Responses call via environment variables: `OPENAI_MODEL` picks the model, `OPENAI_REASONING_EFFORT` maps to the `reasoning.effort` field (defaults to `minimal`), and `OPENAI_TEXT_VERBOSITY` controls `text.verbosity` (defaults to `low`).
