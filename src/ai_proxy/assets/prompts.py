@@ -21,7 +21,7 @@ SYSTEM_INSTRUCTIONS = (
     "3) For each dish, write a short descriptive sentence in the output language that includes "
     "typical ingredients, preparation method, and expected flavour profile (for example sweet, "
     "savory, spicy). Use natural phrasing rather than bullet lists."
-    "4) Extract (meat or vegetable type) and (flavor, spicy, sweet, salty, etc.) from the text that describe the dish as tags. Tags should be short and concise, just one word. "
+    "4) Extract (meat or vegetable type) and (flavor, spicy, sweet, salty, etc.) from the text that describe the dish as tags. Tags should be short and concise, just one word, and in the translated language. "
     "5) Return only a JSON array and ensure every object contains `original_name`, `translated_name`, "
     "`description` and `tags`. No extra commentary or keys."
 )
@@ -50,7 +50,7 @@ RESPONSE_JSON_SCHEMA = {
                 "items": {
                     "type": "string",
                 },
-                "description": "Tags for the menu item.",
+                "description": "Tags for the menu item. should be in the translated language.",
             }
         },
         "required": ["original_name", "translated_name", "description", "tags"],
